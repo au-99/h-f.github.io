@@ -314,6 +314,52 @@
     if (event.key === "Escape" && !rsvpSuccess.hidden) hideRsvpSuccess();
   });
 
+  const createSubmissionId = () => {
+    if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+      return globalThis.crypto.randomUUID();
+    }
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  };
+
+  const getSubmissionStatus = (submissionId) => new Promise((resolve, reject) => {
+    const callbackName = `__rsvpStatus_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const statusUrl = new URL(config.rsvpEndpoint);
+    statusUrl.searchParams.set("action", "submissionStatus");
+    statusUrl.searchParams.set("submissionId", submissionId);
+    statusUrl.searchParams.set("callback", callbackName);
+
+    const script = document.createElement("script");
+    const cleanup = () => {
+      window.clearTimeout(timeoutId);
+      script.remove();
+      delete window[callbackName];
+    };
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Pengesahan mengambil masa terlalu lama. Sila cuba lagi."));
+    }, 6000);
+
+    window[callbackName] = (status) => {
+      cleanup();
+      resolve(status);
+    };
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Tidak dapat mengesahkan simpanan RSVP. Sila cuba lagi."));
+    };
+    script.src = statusUrl.toString();
+    document.head.append(script);
+  });
+
+  const confirmSubmission = async (submissionId) => {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const status = await getSubmissionStatus(submissionId);
+      if (!status || !status.pending) return status;
+      await new Promise((resolve) => window.setTimeout(resolve, 700 + attempt * 250));
+    }
+    return { ok: false, message: "Jawapan belum dapat disahkan. Sila cuba lagi." };
+  };
+
   rsvpForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     setStatus("");
@@ -351,7 +397,9 @@
     rsvpForm.setAttribute("aria-busy", "true");
     setStatus("Jawapan anda sedang dihantar…");
 
+    const submissionId = createSubmissionId();
     const formData = new FormData(rsvpForm);
+    formData.set("submissionId", submissionId);
     formData.set("submittedAt", new Date().toISOString());
     formData.set("sourceUrl", window.location.href.slice(0, 500));
 
@@ -361,6 +409,10 @@
         mode: "no-cors",
         body: new URLSearchParams([...formData.entries()]),
       });
+      const submissionStatus = await confirmSubmission(submissionId);
+      if (!submissionStatus || !submissionStatus.ok) {
+        throw new Error(submissionStatus?.message || "Jawapan tidak dapat disimpan. Sila cuba lagi.");
+      }
       rsvpForm.reset();
       invitationTypeInput.value = invitationType === "family"
         ? "Keluarga (Akad Nikah + Resepsi)"
@@ -371,8 +423,11 @@
       guestCountLabel.style.opacity = "1";
       setStatus("Jawapan RSVP berjaya dihantar.");
       showRsvpSuccess();
-    } catch {
-      setStatus("Maaf, jawapan tidak dapat dihantar. Sila cuba lagi atau hubungi pihak keluarga.", true);
+    } catch (error) {
+      const message = error instanceof Error && error.message
+        ? error.message
+        : "Maaf, jawapan tidak dapat dihantar. Sila cuba lagi atau hubungi pihak keluarga.";
+      setStatus(message, true);
     } finally {
       submitButton.disabled = false;
       submitButton.classList.remove("is-loading");
