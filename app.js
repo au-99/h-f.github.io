@@ -31,6 +31,7 @@
   const formStatus = document.getElementById("formStatus");
   const guestCount = document.getElementById("guestCount");
   const guestCountLabel = document.getElementById("guestCountLabel");
+  const calendarButton = document.getElementById("calendarButton");
   const solemnisationTheme = document.getElementById("solemnisationTheme");
   const solemnisationThemeRow = document.getElementById("solemnisationThemeRow");
   const submitButton = rsvpForm.querySelector('button[type="submit"]');
@@ -40,6 +41,14 @@
   const consentInput = rsvpForm.querySelector('input[name="consent"]');
   const rsvpSuccess = document.getElementById("rsvpSuccess");
   const closeRsvpSuccess = document.getElementById("closeRsvpSuccess");
+
+  // A family representative may RSVP for a larger household. Reception-only
+  // invitations keep a smaller list while adding the requested fifth guest.
+  const maximumGuests = invitationType === "family" ? 10 : 5;
+  guestCount.replaceChildren(new Option("Pilih jumlah", ""));
+  for (let count = 1; count <= maximumGuests; count += 1) {
+    guestCount.add(new Option(`${count} orang`, String(count)));
+  }
 
   // Both family invitations share the approved painted visual language.
   // The groom route uses a separate champagne palette while `invitationType`
@@ -87,7 +96,7 @@
 
   if (lockedSide) {
     familySideInput.value = familySideNames[lockedSide];
-    const sideTheme = lockedSide === "bride" ? "Dusty blue / biru muda" : "Champagne";
+    const sideTheme = lockedSide === "bride" ? "Dusty blue / biru muda" : "Colour Nude";
     solemnisationTheme.textContent = sideTheme;
   } else {
     sidePickerLabel.hidden = false;
@@ -104,6 +113,24 @@
   }
 
   document.getElementById("mapsButton").href = config.mapsUrl || "#";
+
+  const calendarCouple = lockedSide === "groom" ? "Fiqri dan Hana" : "Hana dan Fiqri";
+  const calendarStart = invitationType === "family" ? "20261114T090000" : "20261114T130000";
+  const calendarTitle = invitationType === "family"
+    ? `Akad Nikah & Majlis Resepsi ${calendarCouple}`
+    : `Majlis Resepsi ${calendarCouple}`;
+  const calendarDetails = invitationType === "family"
+    ? "Walimatul Urus: Majlis Akad Nikah dan Majlis Resepsi."
+    : "Walimatul Urus: Majlis Resepsi.";
+  const calendarParams = new URLSearchParams({
+    action: "TEMPLATE",
+    text: calendarTitle,
+    dates: `${calendarStart}/20261114T163000`,
+    details: calendarDetails,
+    location: "Sam Sweet Gardens, Lot 3858, Lorong Tali Air, Jalan Hospital, Bandar Kota Bharu, 15200 Kota Bharu, Kelantan",
+    ctz: "Asia/Kuala_Lumpur",
+  });
+  calendarButton.href = `https://calendar.google.com/calendar/render?${calendarParams.toString()}`;
 
   if (config.musicUrl) {
     backgroundMusic.src = config.musicUrl;
@@ -126,7 +153,7 @@
     }
   };
 
-  openButton.addEventListener("click", () => {
+  openingScreen.addEventListener("click", () => {
     openingScreen.classList.add("is-opening");
     tryPlayMusic();
     window.setTimeout(() => {

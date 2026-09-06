@@ -5,7 +5,7 @@ Laman e-undangan berbahasa Melayu untuk GitHub Pages, dengan dua pengalaman unda
 - **Keluarga:** memaparkan akad nikah dan resepsi.
 - **Tetamu umum:** memaparkan resepsi bermula jam 1:00 petang sahaja.
 
-Pihak keluarga dan jenis undangan ditentukan melalui pautan. Tetamu mengisi nama, nombor telefon, kehadiran dan jumlah tetamu sendiri. Maksimum ialah 4 orang termasuk pengisi borang.
+Pihak keluarga dan jenis undangan ditentukan melalui pautan. Tetamu mengisi nama, nombor telefon, kehadiran dan jumlah tetamu sendiri. Undangan keluarga menerima sehingga 10 orang, manakala undangan resepsi menerima sehingga 5 orang termasuk pengisi borang.
 
 ## 1. Sambungkan Google Sheets
 
@@ -50,21 +50,18 @@ Letakkan fail MP3 berlesen dalam repositori, kemudian kemas kini `musicUrl` dala
 
 ## 4. Terbitkan di GitHub Pages
 
-1. Cipta repositori awam bernama `h-f.github.io` dalam akaun `au-99`.
+1. Gunakan repositori awam `au-99/h-f.github.io`.
 2. Muat naik semua kandungan folder ini ke bahagian utama repositori.
 3. Buka **Settings → Pages**.
 4. Pada **Build and deployment**, pilih **Deploy from a branch**.
 5. Pilih cabang `main` dan folder `/ (root)`, kemudian simpan.
 
-Alamat laman akan menjadi `https://au-99.github.io/h-f.github.io/` selepas penerbitan selesai.
+Alamat laman ialah `https://au-99.github.io/h-f.github.io/` selepas penerbitan selesai.
 
 ## Jika `setupSpreadsheet` tamat masa
 
 Pastikan anda menggunakan versi terkini `Code.gs`, kemudian pilih `setupSpreadsheet` dan tekan **Run** — bukan **Debug** atau **Restart debugger**. Versi terkini menggunakan notifikasi tidak menyekat dan selamat dijalankan semula; respons RSVP yang sudah ada tidak akan dipadam.
 
-## Perkara untuk diganti kemudian
+## Perkara pilihan untuk diganti kemudian
 
-- URL Google Apps Script dalam `config.js`.
-- Fail muzik dalam `assets`.
-- Nombor telefon Faheem dan Fadhlin dalam `index.html`.
 - `og.png` jika mahu menukar gambar pratonton perkongsian.

@@ -17,7 +17,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,ital,wght@6..96,400;6..96,500;6..96,600;6..96,700;6..96,400&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Montserrat:wght@300;400;500;600&family=Parisienne&display=swap" rel="stylesheet" />
     <style>html.theme-pending body { visibility: hidden; }</style>
-    <link rel="stylesheet" href="styles.css?v=20260905-25" />
+    <link rel="stylesheet" href="styles.css?v=20260906-31" />
   </head>
   <body class="is-locked">
     <script>
@@ -61,6 +61,10 @@
           <span class="lace-trim lace-right"></span>
           <span class="envelope-flap"></span>
           <span class="wax-seal"><img src="hf-monogram.png" alt="" /></span>
+        </span>
+        <span class="opening-cta" aria-hidden="true">
+          <strong>Buka undangan</strong>
+          <small>Tekan di mana-mana untuk membuka</small>
         </span>
       </button>
     </div>
@@ -178,6 +182,10 @@
           </div>
         </article>
 
+        <div class="event-actions reveal">
+          <a class="button secondary calendar-button" id="calendarButton" href="#" target="_blank" rel="noopener">Simpan Tarikh · Google Calendar</a>
+        </div>
+
         <div class="venue-card reveal" id="lokasi">
           <p class="eyebrow">Lokasi</p>
           <h3>Sam Sweet Gardens</h3>
@@ -213,7 +221,7 @@
           <div class="section-heading light">
             <p class="eyebrow">Mohon Jawapan</p>
             <h2>RSVP</h2>
-            <p>Sila sahkan kehadiran selewat-lewatnya pada <strong>30 Oktober 2026</strong>. Satu jemputan adalah untuk maksimum empat orang termasuk anda.</p>
+            <p>Sila sahkan kehadiran selewat-lewatnya pada <strong>30 Oktober 2026</strong>.</p>
           </div>
           <form id="rsvpForm" novalidate>
             <input type="hidden" name="invitationType" id="invitationType" />
@@ -228,7 +236,7 @@
 
             <label>Nombor telefon <span class="required-mark" aria-hidden="true">*</span>
               <input type="tel" name="phone" autocomplete="tel" inputmode="tel" maxlength="20" required placeholder="Contoh: 0123456789" aria-describedby="phoneHelp" />
-              <small id="phoneHelp">Gunakan nombor Malaysia yang aktif. Nombor yang sama boleh digunakan untuk mengemas kini jawapan.</small>
+              <small id="phoneHelp" role="note">Gunakan nombor Malaysia yang aktif. Nombor yang sama boleh digunakan untuk mengemas kini jawapan.</small>
             </label>
 
             <fieldset>
@@ -240,10 +248,6 @@
             <label id="guestCountLabel">Jumlah tetamu termasuk anda <span class="required-mark" aria-hidden="true">*</span>
               <select name="guestCount" id="guestCount" required>
                 <option value="">Pilih jumlah</option>
-                <option value="1">1 orang</option>
-                <option value="2">2 orang</option>
-                <option value="3">3 orang</option>
-                <option value="4">4 orang</option>
               </select>
             </label>
 
@@ -289,7 +293,7 @@
           <div class="contact-family groom-contacts">
             <h3>Keluarga Pengantin Lelaki</h3>
             <a href="https://wa.me/60139291367" target="_blank" rel="noopener"><span>Fahmi</span><small>+60 13-929 1367</small></a>
-            <a href="https://wa.me/60133892181" target="_blank" rel="noopener"><span>Norazani</span><small>+60 13-389 2181</small></a>
+            <a href="https://wa.me/60133892181" target="_blank" rel="noopener"><span>Noraniza</span><small>+60 13-389 2181</small></a>
             <a href="https://wa.me/601110740881" target="_blank" rel="noopener"><span>Faheem</span><small>+60 11-1074 0881</small></a>
             <a href="https://wa.me/60199564881" target="_blank" rel="noopener"><span>Fadhlin</span><small>+60 19-956 4881</small></a>
           </div>
@@ -304,7 +308,7 @@
       <span>14 November 2026</span>
     </footer>
 
-    <script src="config.js?v=20260905-25"></script>
-    <script src="app.js?v=20260905-25"></script>
+    <script src="config.js?v=20260906-31"></script>
+    <script src="app.js?v=20260906-31"></script>
   </body>
 </html>
