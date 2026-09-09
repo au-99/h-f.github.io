@@ -2873,3 +2873,99 @@ body[data-invite="reception"][data-side="bride"][data-palette="champagne"] .open
   filter: sepia(.82) saturate(.72) hue-rotate(349deg) brightness(1.03);
   pointer-events: none;
 }
+
+/* Make the calendar action read clearly as a button while preserving each palette. */
+body .events-section .calendar-button.button.secondary {
+  width: min(100%, 24rem);
+  min-height: 3.75rem;
+  gap: .8rem;
+  padding: .85rem 1.15rem;
+  border: 1px solid #c9ad79;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #557aa4, #365d88);
+  color: #fffdf8;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.3),
+    0 12px 26px rgba(47,79,117,.24);
+  letter-spacing: .115em;
+  transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+}
+
+.events-section .calendar-button::before {
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: .38rem;
+  background: rgba(255,253,248,.96);
+  color: #365d88;
+  box-shadow: 0 4px 10px rgba(30,54,80,.18);
+  font-size: .62rem;
+}
+
+.events-section .calendar-button::after {
+  content: "›";
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  border: 1px solid rgba(255,255,255,.48);
+  border-radius: 50%;
+  font: 600 1rem/1 var(--sans);
+  transition: transform .2s ease, background .2s ease;
+}
+
+body .events-section .calendar-button.button.secondary:hover {
+  color: #fffdf8;
+  filter: brightness(1.06);
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.34),
+    0 16px 32px rgba(47,79,117,.3);
+}
+
+.events-section .calendar-button:hover::after {
+  background: rgba(255,255,255,.14);
+  transform: translateX(2px);
+}
+
+.events-section .calendar-button:active {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 5px rgba(29,48,68,.18), 0 7px 16px rgba(47,79,117,.2);
+}
+
+.events-section .calendar-button:focus-visible {
+  outline: 3px solid rgba(85,122,164,.32);
+  outline-offset: 4px;
+}
+
+body[data-palette="champagne"] .events-section .calendar-button.button.secondary {
+  border-color: #dcc18e;
+  background: linear-gradient(135deg, #a67c49, #7b5937);
+  color: #fffaf0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.28),
+    0 12px 26px rgba(92,67,40,.24);
+}
+
+body[data-palette="champagne"] .events-section .calendar-button::before {
+  border-color: rgba(255,250,240,.72);
+  background: #fffaf0;
+  color: #795b3a;
+  box-shadow: 0 4px 10px rgba(92,67,40,.18);
+}
+
+body[data-palette="champagne"] .events-section .calendar-button.button.secondary:hover {
+  color: #fffaf0;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.32),
+    0 16px 32px rgba(92,67,40,.3);
+}
+
+body[data-palette="champagne"] .events-section .calendar-button:active {
+  box-shadow: inset 0 2px 5px rgba(74,51,28,.2), 0 7px 16px rgba(92,67,40,.2);
+}
+
+body[data-palette="champagne"] .events-section .calendar-button:focus-visible {
+  outline-color: rgba(166,124,73,.34);
+}
