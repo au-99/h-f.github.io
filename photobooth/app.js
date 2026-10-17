@@ -3,11 +3,10 @@
 
   const W = 1080;
   const H = 1920;
-  const FRAME_VERSION = "2026-10-17";
+  const FRAME_VERSION = "2026-10-18";
   const frameGrid = document.getElementById("frameGrid");
   const canvas = document.getElementById("composition");
   const ctx = canvas.getContext("2d", { alpha: false });
-  const video = document.getElementById("liveVideo");
   const loading = document.getElementById("stageLoading");
   const status = document.getElementById("status");
   const caption = document.getElementById("stageCaption");
@@ -15,14 +14,10 @@
   const progressText = document.getElementById("progressText");
   const shotList = document.getElementById("shotList");
   const finish = document.getElementById("finish");
-  const openCameraButton = document.getElementById("openCamera");
-  const captureButton = document.getElementById("capture");
-  const switchCameraButton = document.getElementById("switchCamera");
   const uploadButton = document.getElementById("uploadPhoto");
   const uploadHelp = document.getElementById("uploadHelp");
   const languageToggle = document.getElementById("languageToggle");
   const languageLabel = document.getElementById("languageLabel");
-  const openCameraLabel = document.getElementById("openCameraLabel");
   const config = window.PHOTOBOOTH_CONFIG || {};
   const endpoint = config.uploadEndpoint || "";
   const uploadReady = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/.test(endpoint)
@@ -30,34 +25,30 @@
 
   const translations = {
     ms: {
-      heroEyebrow: "KENANGAN HARI BAHAGIA", heroTitle: "Satu foto, seribu kenangan.", start: "Mula",
       chooseFrame: "Pilih bingkai", all: "Semua", collageShort: "4 foto", portraitShort: "1 foto", fullShort: "Foto penuh",
-      takePhoto: "Ambil foto", loading: "Memuatkan…", capture: "Ambil", flip: "Tukar", phoneCamera: "Kamera telefon",
-      choosePhoto: "Pilih foto", save: "Simpan", album: "Album", openCamera: "Kamera", restartCamera: "Mula semula kamera",
+      takePhoto: "Ambil foto", loading: "Memuatkan…", phoneCamera: "Kamera telefon",
+      choosePhoto: "Pilih foto", save: "Simpan", album: "Album",
       switchLanguage: "Switch to English", frameAria: "Bingkai {id}, {type}", frameCaption: "Bingkai {id} · {type}",
       hintCollage: "4 foto, satu demi satu.", hintSingle: "1 foto sahaja.", progressCollage: "4 foto", progressSingle: "1 foto",
       shotEmpty: "Foto {number}", shotDone: "Foto {number} dipilih.",
-      initial: "Pilih bingkai.", selected: "Bingkai dipilih.", cameraUnavailable: "Kamera tidak tersedia. Gunakan kamera telefon.",
-      cameraError: "Kamera gagal dibuka. Cuba kamera telefon.", cameraReadyCollage: "Ambil foto {number}/4.", cameraReadySingle: "Kamera sedia.",
+      initial: "Pilih bingkai.", selected: "Bingkai dipilih.",
       complete: "Sedia untuk simpan.", nextShot: "Seterusnya: foto {number}/4.", retake: "Ambil semula foto {number}", frameError: "Bingkai gagal dimuatkan.",
-      captureError: "Gagal ambil foto. Cuba lagi.", fileError: "Foto gagal dibaca. Cuba JPG atau PNG.", newSession: "Sesi baharu.",
+      fileError: "Foto gagal dibaca. Cuba JPG atau PNG.", newSession: "Sesi baharu.",
       saveShared: "Pilih cara simpan dalam menu telefon.", saved: "Muat turun bermula.", saveError: "Gagal simpan foto. Cuba lagi.",
       uploading: "Menghantar ke album…", uploadSuccess: "Foto tersimpan dalam album.", uploadError: "Muat naik gagal. Simpan foto dahulu.",
       uploadHelpInactive: "Drive belum tersedia.", uploadHelpPreview: "Uji album di laman HTTPS.", uploadHelpActive: "Album tersedia.", confirmSwitch: "Tukar bingkai dan kosongkan foto sesi ini?",
       filterAria: "Jenis bingkai", previewAria: "Pratonton foto", progressAria: "Kemajuan foto", shareTitle: "Kenangan Hana & Fiqri"
     },
     en: {
-      heroEyebrow: "YOUR BIG DAY", heroTitle: "One photo, a thousand memories.", start: "Start",
       chooseFrame: "Choose a frame", all: "All", collageShort: "4 photos", portraitShort: "1 photo", fullShort: "Full photo",
-      takePhoto: "Take a photo", loading: "Loading…", capture: "Capture", flip: "Flip", phoneCamera: "Phone camera",
-      choosePhoto: "Choose photo", save: "Save", album: "Album", openCamera: "Camera", restartCamera: "Restart camera",
+      takePhoto: "Take a photo", loading: "Loading…", phoneCamera: "Phone camera",
+      choosePhoto: "Choose photo", save: "Save", album: "Album",
       switchLanguage: "Tukar ke Bahasa Melayu", frameAria: "Frame {id}, {type}", frameCaption: "Frame {id} · {type}",
       hintCollage: "4 photos, one at a time.", hintSingle: "Just 1 photo.", progressCollage: "4 photos", progressSingle: "1 photo",
       shotEmpty: "Photo {number}", shotDone: "Photo {number} selected.",
-      initial: "Choose a frame.", selected: "Frame selected.", cameraUnavailable: "Camera unavailable. Use phone camera.",
-      cameraError: "Could not open camera. Try phone camera.", cameraReadyCollage: "Take photo {number}/4.", cameraReadySingle: "Camera ready.",
+      initial: "Choose a frame.", selected: "Frame selected.",
       complete: "Ready to save.", nextShot: "Next: photo {number}/4.", retake: "Retake photo {number}", frameError: "Could not load frame.",
-      captureError: "Could not capture. Try again.", fileError: "Could not read photo. Try JPG or PNG.", newSession: "New session.",
+      fileError: "Could not read photo. Try JPG or PNG.", newSession: "New session.",
       saveShared: "Choose a save option on your phone.", saved: "Download started.", saveError: "Could not save photo. Try again.",
       uploading: "Sending to album…", uploadSuccess: "Photo saved to album.", uploadError: "Upload failed. Save your photo first.",
       uploadHelpInactive: "Drive not ready.", uploadHelpPreview: "Test album on the HTTPS site.", uploadHelpActive: "Album available.", confirmSwitch: "Change frame and clear this session's photos?",
@@ -87,9 +78,6 @@
     overlay: null,
     shots: [],
     activeIndex: 0,
-    stream: null,
-    facingMode: "user",
-    rendering: false,
     loadingFrame: false
   };
 
@@ -126,10 +114,6 @@
     progressText.textContent = t(id <= 4 ? "progressCollage" : "progressSingle");
   }
 
-  function updateCameraLabel() {
-    openCameraLabel.textContent = t(state.stream ? "restartCamera" : "openCamera");
-  }
-
   function updateUploadHelp() {
     uploadHelp.textContent = t(!endpoint ? "uploadHelpInactive" : uploadReady ? "uploadHelpActive" : "uploadHelpPreview");
   }
@@ -149,7 +133,6 @@
       button.querySelector(".frame-meta small").textContent = labelFor(id);
     });
     updateFrameText();
-    updateCameraLabel();
     updateUploadHelp();
     updateShotList();
     renderStatus();
@@ -253,7 +236,6 @@
     if (id !== state.frameId && state.shots.some(Boolean) && !window.confirm(t("confirmSwitch"))) return;
     state.loadingFrame = true;
     loading.hidden = false;
-    stopCamera();
     state.frameId = id;
     state.shots = Array(slotsFor(id).length).fill(null);
     state.activeIndex = 0;
@@ -303,7 +285,7 @@
     }
     const slots = slotsFor(state.frameId);
     slots.forEach((slot, index) => {
-      const source = state.shots[index] || (index === state.activeIndex && state.stream && video.readyState >= 2 ? video : null);
+      const source = state.shots[index];
       if (source) drawCover(source, slot);
       else if (!decorated) {
         ctx.save();
@@ -315,60 +297,6 @@
       }
     });
     if (state.overlay) ctx.drawImage(decorated ? state.overlay.foreground : state.overlay, 0, 0, W, H);
-  }
-
-  function renderLoop() {
-    if (!state.stream) {
-      state.rendering = false;
-      return;
-    }
-    drawComposition();
-    requestAnimationFrame(renderLoop);
-  }
-
-  function stopCamera() {
-    if (state.stream) state.stream.getTracks().forEach(track => track.stop());
-    state.stream = null;
-    video.srcObject = null;
-    captureButton.disabled = true;
-    switchCameraButton.hidden = true;
-    updateCameraLabel();
-  }
-
-  async function openCamera() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setStatus("cameraUnavailable", "error");
-      return;
-    }
-    stopCamera();
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: { ideal: state.facingMode }, width: { ideal: 1280 }, height: { ideal: 1920 } } });
-      state.stream = stream;
-      video.srcObject = stream;
-      await video.play();
-      captureButton.disabled = false;
-      switchCameraButton.hidden = false;
-      updateCameraLabel();
-      setStatus(state.shots.length === 4 ? "cameraReadyCollage" : "cameraReadySingle", "", { number: state.activeIndex + 1 });
-      if (!state.rendering) {
-        state.rendering = true;
-        requestAnimationFrame(renderLoop);
-      }
-    } catch (error) {
-      stopCamera();
-      setStatus("cameraError", "error");
-    }
-  }
-
-  async function imageFromVideo() {
-    const still = document.createElement("canvas");
-    still.width = video.videoWidth;
-    still.height = video.videoHeight;
-    still.getContext("2d").drawImage(video, 0, 0);
-    const image = new Image();
-    image.src = still.toDataURL("image/jpeg", 0.91);
-    await image.decode();
-    return image;
   }
 
   async function imageFromFile(file) {
@@ -389,7 +317,6 @@
     state.shots[state.activeIndex] = image;
     const next = state.shots.findIndex(shot => !shot);
     if (next < 0) {
-      stopCamera();
       finish.hidden = false;
       setStatus("complete", "success");
       document.getElementById("finish").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -526,18 +453,6 @@
   }
 
   document.querySelectorAll(".filter").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filter)));
-  openCameraButton.addEventListener("click", openCamera);
-  captureButton.addEventListener("click", async () => {
-    if (!state.stream || video.readyState < 2) return;
-    captureButton.disabled = true;
-    try { acceptShot(await imageFromVideo()); }
-    catch (error) { setStatus("captureError", "error"); }
-    finally { captureButton.disabled = !state.stream; }
-  });
-  switchCameraButton.addEventListener("click", () => {
-    state.facingMode = state.facingMode === "user" ? "environment" : "user";
-    openCamera();
-  });
   document.getElementById("phoneCamera").addEventListener("click", () => document.getElementById("cameraFile").click());
   document.getElementById("choosePhoto").addEventListener("click", () => document.getElementById("libraryFile").click());
   for (const id of ["cameraFile", "libraryFile"]) {
@@ -553,7 +468,6 @@
   document.getElementById("savePhoto").addEventListener("click", savePhoto);
   uploadButton.addEventListener("click", uploadPhoto);
   document.getElementById("startOver").addEventListener("click", () => {
-    stopCamera();
     state.shots = Array(slotsFor(state.frameId).length).fill(null);
     state.activeIndex = 0;
     finish.hidden = true;
@@ -561,8 +475,6 @@
     drawComposition();
     setStatus("newSession");
   });
-  window.addEventListener("pagehide", stopCamera);
-
   try { if (localStorage.getItem("hf-photobooth-language") === "en") state.lang = "en"; } catch (_) { /* storage may be unavailable */ }
   makeGallery();
   if (uploadReady) {
