@@ -3,10 +3,15 @@
 
   const W = 1080;
   const H = 1920;
+  const MAX_VIDEO_BYTES = 24 * 1024 * 1024;
+  const VIDEO_CHUNK_BYTES = 1024 * 1024;
   const FRAME_VERSION = "2026-10-18";
   const frameGrid = document.getElementById("frameGrid");
   const canvas = document.getElementById("composition");
   const ctx = canvas.getContext("2d", { alpha: false });
+  const videoPreview = document.getElementById("videoPreview");
+  const cameraButton = document.getElementById("phoneCamera");
+  const cameraChoices = document.getElementById("cameraChoices");
   const loading = document.getElementById("stageLoading");
   const status = document.getElementById("status");
   const caption = document.getElementById("stageCaption");
@@ -14,8 +19,10 @@
   const progressText = document.getElementById("progressText");
   const shotList = document.getElementById("shotList");
   const finish = document.getElementById("finish");
-  const uploadButton = document.getElementById("uploadPhoto");
-  const uploadHelp = document.getElementById("uploadHelp");
+  const saveButton = document.getElementById("savePhoto");
+  const saveHelp = document.getElementById("saveHelp");
+  const albumUploads = document.getElementById("albumUploads");
+  const albumList = document.getElementById("albumList");
   const languageToggle = document.getElementById("languageToggle");
   const languageLabel = document.getElementById("languageLabel");
   const config = window.PHOTOBOOTH_CONFIG || {};
@@ -26,32 +33,44 @@
   const translations = {
     ms: {
       chooseFrame: "Pilih bingkai", all: "Semua", collageShort: "4 foto", portraitShort: "1 foto", fullShort: "Foto penuh",
-      takePhoto: "Ambil foto", loading: "Memuatkan…", phoneCamera: "Kamera telefon",
-      choosePhoto: "Pilih foto", save: "Simpan", album: "Album",
+      takePhoto: "Ambil foto", loading: "Memuatkan…", phoneCamera: "Camera", photoChoice: "Foto", videoChoice: "Video",
+      choosePhoto: "Pilih foto", save: "Simpan", myUploads: "Album saya", delete: "Padam",
       switchLanguage: "Switch to English", frameAria: "Bingkai {id}, {type}", frameCaption: "Bingkai {id} · {type}",
       hintCollage: "4 foto, satu demi satu.", hintSingle: "1 foto sahaja.", progressCollage: "4 foto", progressSingle: "1 foto",
       shotEmpty: "Foto {number}", shotDone: "Foto {number} dipilih.",
       initial: "Pilih bingkai.", selected: "Bingkai dipilih.",
       complete: "Sedia untuk simpan.", nextShot: "Seterusnya: foto {number}/4.", retake: "Ambil semula foto {number}", frameError: "Bingkai gagal dimuatkan.",
       fileError: "Foto gagal dibaca. Cuba JPG atau PNG.", newSession: "Sesi baharu.",
-      saveShared: "Pilih cara simpan dalam menu telefon.", saved: "Muat turun bermula.", saveError: "Gagal simpan foto. Cuba lagi.",
-      uploading: "Menghantar ke album…", uploadSuccess: "Foto tersimpan dalam album.", uploadError: "Muat naik gagal. Simpan foto dahulu.",
-      uploadHelpInactive: "Drive belum tersedia.", uploadHelpPreview: "Uji album di laman HTTPS.", uploadHelpActive: "Album tersedia.", confirmSwitch: "Tukar bingkai dan kosongkan foto sesi ini?",
+      saving: "Menyimpan…", savedBoth: "Album disimpan. Semak foto di telefon.", savedAlbum: "Album disimpan; simpanan telefon belum selesai.",
+      savedPhone: "Album gagal. Tekan Simpan lagi.", savedPhoneOnly: "Album belum tersedia. Simpan ke telefon sahaja.", saveError: "Gagal simpan. Cuba lagi.",
+      saveHelpActive: "Telefon + album", saveHelpPreview: "Telefon sahaja dalam pratonton", saveHelpInactive: "Telefon sahaja",
+      deleteConfirm: "Padam daripada album?", deleting: "Memadam…", deleted: "Dipadam daripada album.", deleteError: "Gagal padam. Cuba lagi.",
+      albumItem: "Tersimpan dalam album", albumPreview: "Pratonton foto anda yang dimuat naik ke album", deleteUnavailable: "Padam belum tersedia untuk foto ini.",
+      videoCaption: "Video · tanpa bingkai", videoProgress: "1 video", videoSelected: "Video sedia untuk disimpan.",
+      videoTooLarge: "Video terlalu besar (maksimum 24 MB). Rakam video lebih pendek.", videoTypeError: "Format video tidak disokong. Cuba MP4, MOV atau WebM.",
+      videoUploading: "Muat naik video {number}/{total}…", videoAlbumItem: "Video dalam album",
+      confirmSwitch: "Tukar bingkai dan kosongkan foto sesi ini?",
       filterAria: "Jenis bingkai", previewAria: "Pratonton foto", progressAria: "Kemajuan foto", shareTitle: "Kenangan Hana & Fiqri"
     },
     en: {
       chooseFrame: "Choose a frame", all: "All", collageShort: "4 photos", portraitShort: "1 photo", fullShort: "Full photo",
-      takePhoto: "Take a photo", loading: "Loading…", phoneCamera: "Phone camera",
-      choosePhoto: "Choose photo", save: "Save", album: "Album",
+      takePhoto: "Take a photo", loading: "Loading…", phoneCamera: "Camera", photoChoice: "Photo", videoChoice: "Video",
+      choosePhoto: "Choose photo", save: "Save", myUploads: "My album", delete: "Delete",
       switchLanguage: "Tukar ke Bahasa Melayu", frameAria: "Frame {id}, {type}", frameCaption: "Frame {id} · {type}",
       hintCollage: "4 photos, one at a time.", hintSingle: "Just 1 photo.", progressCollage: "4 photos", progressSingle: "1 photo",
       shotEmpty: "Photo {number}", shotDone: "Photo {number} selected.",
       initial: "Choose a frame.", selected: "Frame selected.",
       complete: "Ready to save.", nextShot: "Next: photo {number}/4.", retake: "Retake photo {number}", frameError: "Could not load frame.",
       fileError: "Could not read photo. Try JPG or PNG.", newSession: "New session.",
-      saveShared: "Choose a save option on your phone.", saved: "Download started.", saveError: "Could not save photo. Try again.",
-      uploading: "Sending to album…", uploadSuccess: "Photo saved to album.", uploadError: "Upload failed. Save your photo first.",
-      uploadHelpInactive: "Drive not ready.", uploadHelpPreview: "Test album on the HTTPS site.", uploadHelpActive: "Album available.", confirmSwitch: "Change frame and clear this session's photos?",
+      saving: "Saving…", savedBoth: "Album saved. Check your phone copy.", savedAlbum: "Album saved; phone save not completed.",
+      savedPhone: "Album failed. Tap Save again.", savedPhoneOnly: "Album unavailable. Phone copy only.", saveError: "Could not save. Try again.",
+      saveHelpActive: "Phone + album", saveHelpPreview: "Phone only in preview", saveHelpInactive: "Phone only",
+      deleteConfirm: "Delete from album?", deleting: "Deleting…", deleted: "Deleted from album.", deleteError: "Could not delete. Try again.",
+      albumItem: "Saved in album", albumPreview: "Preview of your photo uploaded to the album", deleteUnavailable: "Delete is not available for this photo yet.",
+      videoCaption: "Video · no frame", videoProgress: "1 video", videoSelected: "Video ready to save.",
+      videoTooLarge: "Video is too large (24 MB maximum). Record a shorter clip.", videoTypeError: "Unsupported video. Try MP4, MOV or WebM.",
+      videoUploading: "Uploading video {number}/{total}…", videoAlbumItem: "Video in album",
+      confirmSwitch: "Change frame and clear this session's photos?",
       filterAria: "Frame types", previewAria: "Photo preview", progressAria: "Photo progress", shareTitle: "Hana & Fiqri Memories"
     }
   };
@@ -77,8 +96,17 @@
     statusParams: {},
     overlay: null,
     shots: [],
+    videoFile: null,
+    videoUrl: "",
+    videoMimeType: "",
     activeIndex: 0,
-    loadingFrame: false
+    loadingFrame: false,
+    saving: false,
+    compositionVersion: 0,
+    uploadedVersion: -1,
+    uploadedFileId: "",
+    phoneSavedVersion: -1,
+    ownedUploads: []
   };
 
   function groupFor(id) {
@@ -109,13 +137,14 @@
 
   function updateFrameText() {
     const id = state.frameId;
-    caption.textContent = t("frameCaption", { id: String(id).padStart(2, "0"), type: labelFor(id) });
-    hint.textContent = t(id <= 4 ? "hintCollage" : "hintSingle");
-    progressText.textContent = t(id <= 4 ? "progressCollage" : "progressSingle");
+    caption.textContent = state.videoFile ? t("videoCaption") :
+      t("frameCaption", { id: String(id).padStart(2, "0"), type: labelFor(id) });
+    hint.textContent = state.videoFile ? t("videoCaption") : t(id <= 4 ? "hintCollage" : "hintSingle");
+    progressText.textContent = state.videoFile ? t("videoProgress") : t(id <= 4 ? "progressCollage" : "progressSingle");
   }
 
-  function updateUploadHelp() {
-    uploadHelp.textContent = t(!endpoint ? "uploadHelpInactive" : uploadReady ? "uploadHelpActive" : "uploadHelpPreview");
+  function updateSaveHelp() {
+    saveHelp.textContent = t(!endpoint ? "saveHelpInactive" : uploadReady ? "saveHelpActive" : "saveHelpPreview");
   }
 
   function applyLanguage() {
@@ -133,8 +162,9 @@
       button.querySelector(".frame-meta small").textContent = labelFor(id);
     });
     updateFrameText();
-    updateUploadHelp();
+    updateSaveHelp();
     updateShotList();
+    renderOwnedUploads();
     renderStatus();
   }
 
@@ -228,17 +258,19 @@
   }
 
   async function selectFrame(id, scroll = false) {
-    if (state.loadingFrame) return;
+    if (state.loadingFrame || state.saving) return;
     if (id === state.frameId && state.overlay) {
       if (scroll) document.getElementById("studio").scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    if (id !== state.frameId && state.shots.some(Boolean) && !window.confirm(t("confirmSwitch"))) return;
+    if (id !== state.frameId && (state.shots.some(Boolean) || state.videoFile) && !window.confirm(t("confirmSwitch"))) return;
     state.loadingFrame = true;
     loading.hidden = false;
+    clearVideo();
     state.frameId = id;
     state.shots = Array(slotsFor(id).length).fill(null);
     state.activeIndex = 0;
+    state.compositionVersion += 1;
     finish.hidden = true;
     document.querySelectorAll(".frame-card").forEach(button => {
       button.setAttribute("aria-pressed", String(Number(button.dataset.frame) === id));
@@ -313,8 +345,53 @@
     }
   }
 
+  function clearVideo() {
+    videoPreview.pause();
+    videoPreview.removeAttribute("src");
+    videoPreview.load();
+    videoPreview.hidden = true;
+    canvas.hidden = false;
+    if (state.videoUrl) URL.revokeObjectURL(state.videoUrl);
+    state.videoFile = null;
+    state.videoUrl = "";
+    state.videoMimeType = "";
+  }
+
+  function videoMimeType(file) {
+    const declared = String(file.type || "").toLowerCase();
+    if (["video/mp4", "video/quicktime", "video/webm"].includes(declared)) return declared;
+    if (declared) return "";
+    const extension = String(file.name || "").toLowerCase().match(/\.(mp4|mov|webm)$/);
+    return extension ? { mp4: "video/mp4", mov: "video/quicktime", webm: "video/webm" }[extension[1]] : "";
+  }
+
+  function acceptVideo(file) {
+    const mimeType = videoMimeType(file);
+    if (!mimeType) return setStatus("videoTypeError", "error");
+    if (file.size > MAX_VIDEO_BYTES) return setStatus("videoTooLarge", "error");
+    clearVideo();
+    state.videoFile = file;
+    state.videoMimeType = mimeType;
+    state.videoUrl = URL.createObjectURL(file);
+    videoPreview.src = state.videoUrl;
+    videoPreview.hidden = false;
+    canvas.hidden = true;
+    state.compositionVersion += 1;
+    finish.hidden = false;
+    updateFrameText();
+    updateShotList();
+    setStatus("videoSelected", "success");
+    document.getElementById("finish").scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
   function acceptShot(image) {
+    if (state.saving) return;
+    if (state.videoFile) {
+      clearVideo();
+      updateFrameText();
+    }
     state.shots[state.activeIndex] = image;
+    state.compositionVersion += 1;
     const next = state.shots.findIndex(shot => !shot);
     if (next < 0) {
       finish.hidden = false;
@@ -330,6 +407,13 @@
 
   function updateShotList() {
     shotList.replaceChildren();
+    if (state.videoFile) {
+      const chip = document.createElement("span");
+      chip.className = "shot-chip is-done";
+      chip.textContent = `✓ ${t("videoChoice")}`;
+      shotList.append(chip);
+      return;
+    }
     const count = slotsFor(state.frameId).length;
     for (let i = 0; i < count; i += 1) {
       const button = document.createElement("button");
@@ -338,8 +422,10 @@
       button.textContent = `${state.shots[i] ? "✓ " : ""}${t("shotEmpty", { number: i + 1 })}`;
       button.title = t(state.shots[i] ? "retake" : "shotEmpty", { number: i + 1 });
       button.addEventListener("click", () => {
+        if (state.saving) return;
         if (state.shots[i]) state.shots[i] = null;
         state.activeIndex = i;
+        state.compositionVersion += 1;
         finish.hidden = true;
         setStatus("shotDone", "", { number: i + 1 });
         updateShotList();
@@ -355,36 +441,6 @@
     });
   }
 
-  async function savePhoto() {
-    if (state.shots.some(shot => !shot)) return;
-    drawComposition();
-    try {
-      const blob = await blobFromCanvas("image/jpeg", 0.92);
-      const name = `Hana-Fiqri-Photobooth-${String(state.frameId).padStart(2, "0")}-${Date.now()}.jpg`;
-      const file = new File([blob], name, { type: "image/jpeg" });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: t("shareTitle") });
-          setStatus("saveShared", "success");
-          return;
-        } catch (error) {
-          if (error.name === "AbortError") return;
-        }
-      }
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = name;
-      document.body.append(link);
-      link.click();
-      link.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      setStatus("saved", "success");
-    } catch (error) {
-      setStatus("saveError", "error");
-    }
-  }
-
   function readBase64(blob) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -394,30 +450,32 @@
     });
   }
 
-  async function uploadPhoto() {
-    if (!uploadReady || state.shots.some(shot => !shot)) return;
-    uploadButton.disabled = true;
-    updateUploadHelp();
-    setStatus("uploading");
-    try {
-      drawComposition();
-      const blob = await blobFromCanvas("image/jpeg", 0.84);
-      if (blob.size > 4 * 1024 * 1024) throw new Error("Image too large");
-      const requestId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
-      const base64 = await readBase64(blob);
+  function requestId() {
+    return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
+  }
+
+  function newDeleteToken() {
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  function thumbnailFromCanvas() {
+    const thumbnail = document.createElement("canvas");
+    thumbnail.width = 180;
+    thumbnail.height = 320;
+    thumbnail.getContext("2d").drawImage(canvas, 0, 0, 180, 320);
+    return thumbnail.toDataURL("image/jpeg", 0.7);
+  }
+
+  function postToAlbum(fields, expectedType, timeoutMs = 60000) {
+    return new Promise((resolve, reject) => {
       const iframe = document.createElement("iframe");
-      iframe.name = `upload_${requestId}`;
+      iframe.name = `album_${fields.requestId}`;
       iframe.hidden = true;
       const form = document.createElement("form");
       form.method = "POST";
       form.action = endpoint;
       form.target = iframe.name;
-      const fields = {
-        requestId,
-        imageBase64: base64,
-        origin: location.origin,
-        fileName: `HF_${Date.now()}_${state.frameId}.jpg`
-      };
       for (const [name, value] of Object.entries(fields)) {
         const input = document.createElement("input");
         input.type = "hidden";
@@ -426,35 +484,285 @@
         form.append(input);
       }
       document.body.append(iframe, form);
-      await new Promise((resolve, reject) => {
-        const timer = setTimeout(() => finishUpload(new Error("Upload timed out")), 60000);
-        function onMessage(event) {
-          if (!/^https:\/\/(script\.google\.com|[^/]+\.googleusercontent\.com)$/.test(event.origin)) return;
-          if (!event.data || event.data.type !== "hf-photo-upload" || event.data.requestId !== requestId) return;
-          finishUpload(event.data.ok ? null : new Error(event.data.message || "Upload rejected"));
-        }
-        function finishUpload(error) {
-          clearTimeout(timer);
-          window.removeEventListener("message", onMessage);
-          iframe.remove();
-          form.remove();
-          error ? reject(error) : resolve();
-        }
-        window.addEventListener("message", onMessage);
-        form.submit();
-      });
-      setStatus("uploadSuccess", "success");
+      let settled = false;
+      const timer = setTimeout(() => finish(new Error("Album timed out")), timeoutMs);
+      function onMessage(event) {
+        if (!/^https:\/\/(script\.google\.com|[^/]+\.googleusercontent\.com)$/.test(event.origin)) return;
+        if (!event.data || event.data.type !== expectedType || event.data.requestId !== fields.requestId) return;
+        finish(event.data.ok ? null : new Error(event.data.message || "Album rejected"), event.data);
+      }
+      function finish(error, data) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        window.removeEventListener("message", onMessage);
+        iframe.remove();
+        form.remove();
+        error ? reject(error) : resolve(data);
+      }
+      window.addEventListener("message", onMessage);
+      try { form.submit(); } catch (error) { finish(error); }
+    });
+  }
+
+  async function uploadPhoto(blob, preview) {
+    if (blob.size > 4 * 1024 * 1024) throw new Error("Image too large");
+    const deleteToken = newDeleteToken();
+    const reply = await postToAlbum({
+      action: "upload",
+      requestId: requestId(),
+      origin: location.origin,
+      deleteToken,
+      imageBase64: await readBase64(blob)
+    }, "hf-photo-upload");
+    if (!/^[A-Za-z0-9_-]{10,200}$/.test(String(reply.fileId || ""))) throw new Error("Invalid album receipt");
+    return {
+      fileId: reply.fileId,
+      deleteToken: reply.deletable === true ? deleteToken : "",
+      preview,
+      kind: "photo"
+    };
+  }
+
+  function videoPoster() {
+    const poster = document.createElement("canvas");
+    poster.width = 180;
+    poster.height = 320;
+    const pen = poster.getContext("2d");
+    pen.fillStyle = "#d8eaf6";
+    pen.fillRect(0, 0, 180, 320);
+    pen.fillStyle = "#42698b";
+    pen.beginPath();
+    pen.arc(90, 160, 36, 0, Math.PI * 2);
+    pen.fill();
+    pen.fillStyle = "#fff";
+    pen.beginPath();
+    pen.moveTo(81, 141);
+    pen.lineTo(81, 179);
+    pen.lineTo(111, 160);
+    pen.closePath();
+    pen.fill();
+    return poster.toDataURL("image/jpeg", 0.7);
+  }
+
+  async function uploadVideo(file, mimeType) {
+    if (file.size > MAX_VIDEO_BYTES) throw new Error("Video too large");
+    const deleteToken = newDeleteToken();
+    const chunkCount = Math.ceil(file.size / VIDEO_CHUNK_BYTES);
+    const shared = {
+      origin: location.origin,
+      deleteToken,
+      mimeType,
+      size: String(file.size),
+      chunkCount: String(chunkCount)
+    };
+    const started = await postToAlbum({
+      ...shared, action: "video-start", requestId: requestId()
+    }, "hf-video-start", 90000);
+    const tempId = String(started.tempId || "");
+    if (!/^[A-Za-z0-9_-]{10,200}$/.test(tempId)) throw new Error("Invalid video session");
+    for (let index = 0; index < chunkCount; index += 1) {
+      setStatus("videoUploading", "", { number: index + 1, total: chunkCount });
+      const start = index * VIDEO_CHUNK_BYTES;
+      await postToAlbum({
+        ...shared,
+        action: "video-chunk",
+        requestId: requestId(),
+        tempId,
+        index: String(index),
+        chunkBase64: await readBase64(file.slice(start, start + VIDEO_CHUNK_BYTES))
+      }, "hf-video-chunk", 90000);
+    }
+    const reply = await postToAlbum({
+      ...shared, action: "video-finish", requestId: requestId(), tempId
+    }, "hf-video-upload", 120000);
+    if (!/^[A-Za-z0-9_-]{10,200}$/.test(String(reply.fileId || ""))) throw new Error("Invalid video receipt");
+    return {
+      fileId: reply.fileId,
+      deleteToken: reply.deletable === true ? deleteToken : "",
+      preview: videoPoster(),
+      objectUrl: URL.createObjectURL(file),
+      kind: "video"
+    };
+  }
+
+  async function saveToPhone(blob, name, mimeType) {
+    const file = new File([blob], name, { type: mimeType });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: t("shareTitle") });
+        return true;
+      } catch (error) {
+        if (error.name === "AbortError") return false;
+      }
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    return true;
+  }
+
+  function persistOwnedUploads() {
+    const portable = state.ownedUploads.map(({ objectUrl, deleting, ...item }) => item);
+    try { sessionStorage.setItem("hf-photobooth-uploads", JSON.stringify(portable)); }
+    catch (_) { /* session storage can be unavailable */ }
+  }
+
+  function restoreOwnedUploads() {
+    try {
+      const stored = JSON.parse(sessionStorage.getItem("hf-photobooth-uploads") || "[]");
+      if (Array.isArray(stored)) state.ownedUploads = stored.filter(item =>
+        /^[A-Za-z0-9_-]{10,200}$/.test(String(item.fileId || "")) &&
+        (!item.deleteToken || /^[a-f0-9]{64}$/.test(item.deleteToken)) &&
+        (!item.kind || item.kind === "photo" || item.kind === "video") &&
+        /^data:image\/jpeg;base64,[A-Za-z0-9+/=]{100,200000}$/.test(String(item.preview || ""))
+      );
+    } catch (_) { /* ignore invalid or inaccessible session data */ }
+  }
+
+  function renderOwnedUploads() {
+    albumUploads.hidden = state.ownedUploads.length === 0;
+    albumList.replaceChildren();
+    for (const item of [...state.ownedUploads].reverse()) {
+      const card = document.createElement("div");
+      card.className = "album-card";
+      const image = item.kind === "video" && item.objectUrl ? document.createElement("video") : document.createElement("img");
+      if (image.tagName === "VIDEO") {
+        image.src = item.objectUrl;
+        image.controls = true;
+        image.playsInline = true;
+        image.setAttribute("aria-label", t("videoAlbumItem"));
+      } else {
+        image.src = item.preview;
+        image.alt = item.kind === "video" ? t("videoAlbumItem") : t("albumPreview");
+      }
+      const actions = document.createElement("div");
+      actions.className = "album-card-actions";
+      const label = document.createElement("strong");
+      label.textContent = t(item.kind === "video" ? "videoAlbumItem" : "albumItem");
+      actions.append(label);
+      if (item.deleteToken) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "text-button";
+        button.textContent = `⌫ ${t("delete")}`;
+        button.disabled = Boolean(item.deleting || state.saving);
+        button.addEventListener("click", () => deleteOwnedPhoto(item));
+        actions.append(button);
+      } else {
+        const note = document.createElement("small");
+        note.textContent = t("deleteUnavailable");
+        actions.append(note);
+      }
+      card.append(image, actions);
+      albumList.append(card);
+    }
+  }
+
+  async function deleteOwnedPhoto(item) {
+    if (!item.deleteToken || item.deleting || state.saving || !window.confirm(t("deleteConfirm"))) return;
+    item.deleting = true;
+    renderOwnedUploads();
+    setStatus("deleting");
+    try {
+      await postToAlbum({
+        action: "delete",
+        requestId: requestId(),
+        origin: location.origin,
+        fileId: item.fileId,
+        deleteToken: item.deleteToken
+      }, "hf-photo-delete");
+      state.ownedUploads = state.ownedUploads.filter(record => record !== item);
+      if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+      if (state.uploadedFileId === item.fileId) {
+        state.uploadedVersion = -1;
+        state.uploadedFileId = "";
+      }
+      persistOwnedUploads();
+      setStatus("deleted", "success");
     } catch (error) {
-      setStatus("uploadError", "error");
+      setStatus("deleteError", "error");
     } finally {
-      uploadButton.disabled = false;
-      updateUploadHelp();
+      item.deleting = false;
+      renderOwnedUploads();
+    }
+  }
+
+  async function saveCurrent() {
+    if (state.saving || (!state.videoFile && state.shots.some(shot => !shot))) return;
+    state.saving = true;
+    saveButton.disabled = true;
+    cameraButton.disabled = true;
+    document.getElementById("takePhoto").disabled = true;
+    document.getElementById("takeVideo").disabled = true;
+    document.getElementById("choosePhoto").disabled = true;
+    cameraChoices.hidden = true;
+    cameraButton.setAttribute("aria-expanded", "false");
+    setStatus("saving");
+    try {
+      const isVideo = Boolean(state.videoFile);
+      if (!isVideo) drawComposition();
+      const version = state.compositionVersion;
+      const blob = isVideo ? state.videoFile : await blobFromCanvas("image/jpeg", 0.84);
+      const preview = isVideo ? "" : thumbnailFromCanvas();
+      const mimeType = isVideo ? state.videoMimeType : "image/jpeg";
+      const suffix = isVideo ? { "video/mp4": "mp4", "video/quicktime": "mov", "video/webm": "webm" }[mimeType] : "jpg";
+      const name = `Hana-Fiqri-${isVideo ? "Video" : `Photobooth-${String(state.frameId).padStart(2, "0")}`}-${Date.now()}.${suffix}`;
+      const needsAlbum = uploadReady && state.uploadedVersion !== version;
+      const needsPhone = state.phoneSavedVersion !== version || !needsAlbum;
+      const albumPromise = needsAlbum ? isVideo ? uploadVideo(blob, mimeType) : uploadPhoto(blob, preview) : Promise.resolve(null);
+      const phonePromise = needsPhone ? saveToPhone(blob, name, mimeType) : Promise.resolve(true);
+      const [albumResult, phoneResult] = await Promise.allSettled([albumPromise, phonePromise]);
+      const albumSaved = !needsAlbum || albumResult.status === "fulfilled";
+      const phoneSaved = phoneResult.status === "fulfilled" && phoneResult.value === true;
+      if (needsAlbum && albumSaved) {
+        state.uploadedVersion = version;
+        state.uploadedFileId = albumResult.value.fileId;
+        state.ownedUploads.push(albumResult.value);
+        persistOwnedUploads();
+        renderOwnedUploads();
+      }
+      if (phoneSaved) state.phoneSavedVersion = version;
+      if (uploadReady) setStatus(albumSaved ? phoneSaved ? "savedBoth" : "savedAlbum" : phoneSaved ? "savedPhone" : "saveError", albumSaved ? "success" : "error");
+      else setStatus(phoneSaved ? "savedPhoneOnly" : "saveError", phoneSaved ? "success" : "error");
+    } catch (error) {
+      setStatus("saveError", "error");
+    } finally {
+      state.saving = false;
+      saveButton.disabled = false;
+      cameraButton.disabled = false;
+      document.getElementById("takePhoto").disabled = false;
+      document.getElementById("takeVideo").disabled = false;
+      document.getElementById("choosePhoto").disabled = false;
+      renderOwnedUploads();
     }
   }
 
   document.querySelectorAll(".filter").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filter)));
-  document.getElementById("phoneCamera").addEventListener("click", () => document.getElementById("cameraFile").click());
-  document.getElementById("choosePhoto").addEventListener("click", () => document.getElementById("libraryFile").click());
+  cameraButton.addEventListener("click", () => {
+    cameraChoices.hidden = !cameraChoices.hidden;
+    cameraButton.setAttribute("aria-expanded", String(!cameraChoices.hidden));
+  });
+  document.getElementById("takePhoto").addEventListener("click", () => {
+    cameraChoices.hidden = true;
+    cameraButton.setAttribute("aria-expanded", "false");
+    document.getElementById("cameraFile").click();
+  });
+  document.getElementById("takeVideo").addEventListener("click", () => {
+    cameraChoices.hidden = true;
+    cameraButton.setAttribute("aria-expanded", "false");
+    document.getElementById("videoFile").click();
+  });
+  document.getElementById("choosePhoto").addEventListener("click", () => {
+    cameraChoices.hidden = true;
+    cameraButton.setAttribute("aria-expanded", "false");
+    document.getElementById("libraryFile").click();
+  });
   for (const id of ["cameraFile", "libraryFile"]) {
     const input = document.getElementById(id);
     input.addEventListener("change", async () => {
@@ -465,21 +773,28 @@
       catch (error) { setStatus("fileError", "error"); }
     });
   }
-  document.getElementById("savePhoto").addEventListener("click", savePhoto);
-  uploadButton.addEventListener("click", uploadPhoto);
+  document.getElementById("videoFile").addEventListener("change", event => {
+    const input = event.currentTarget;
+    const file = input.files && input.files[0];
+    input.value = "";
+    if (file) acceptVideo(file);
+  });
+  document.getElementById("savePhoto").addEventListener("click", saveCurrent);
   document.getElementById("startOver").addEventListener("click", () => {
+    if (state.saving) return;
+    clearVideo();
     state.shots = Array(slotsFor(state.frameId).length).fill(null);
     state.activeIndex = 0;
+    state.compositionVersion += 1;
     finish.hidden = true;
+    updateFrameText();
     updateShotList();
     drawComposition();
     setStatus("newSession");
   });
   try { if (localStorage.getItem("hf-photobooth-language") === "en") state.lang = "en"; } catch (_) { /* storage may be unavailable */ }
+  restoreOwnedUploads();
   makeGallery();
-  if (uploadReady) {
-    uploadButton.disabled = false;
-  }
   languageToggle.addEventListener("click", switchLanguage);
   applyLanguage();
   selectFrame(9);
