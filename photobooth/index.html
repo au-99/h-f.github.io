@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#e7f1fa">
     <meta name="description" content="Photobooth majlis Hana & Fiqri — ambil gambar, pilih bingkai dan simpan kenangan.">
     <title>Photobooth Hana & Fiqri</title>
-    <link rel="stylesheet" href="styles.css?v=2026-10-18-3">
+    <link rel="stylesheet" href="styles.css?v=2026-10-18-4">
     <script defer src="config.js?v=2026-10-17-3"></script>
-    <script defer src="app.js?v=2026-10-18-3"></script>
+    <script defer src="app.js?v=2026-10-18-4"></script>
   </head>
   <body>
     <header class="site-header">
@@ -25,7 +25,7 @@
     <main>
       <section class="section-wrap chooser" id="pilih-bingkai" aria-labelledby="frame-title">
         <div class="section-heading">
-          <p class="eyebrow">01 / 02</p>
+          <p class="eyebrow">01 / 03</p>
           <h1 id="frame-title" data-i18n="chooseFrame">Pilih bingkai</h1>
         </div>
         <div class="filter-row" role="group" aria-label="Jenis bingkai">
@@ -39,7 +39,7 @@
 
       <section class="section-wrap studio" id="studio" aria-labelledby="studio-title">
         <div class="section-heading">
-          <p class="eyebrow">02 / 02</p>
+          <p class="eyebrow">02 / 03</p>
           <h2 id="studio-title" data-i18n="takePhoto">Ambil foto</h2>
           <p id="studioHint">Pilih bingkai.</p>
         </div>
@@ -47,7 +47,6 @@
           <div class="stage-wrap">
             <div class="stage">
               <canvas id="composition" width="1080" height="1920" role="img" aria-label="Pratonton foto dengan bingkai pilihan"></canvas>
-              <video id="videoPreview" class="video-preview" controls playsinline hidden></video>
               <div class="stage-loading" id="stageLoading" data-i18n="loading">Memuatkan…</div>
             </div>
             <span class="stage-caption" id="stageCaption">Bingkai 09 · Foto penuh</span>
@@ -58,15 +57,10 @@
             <div class="shot-list" id="shotList" aria-label="Kemajuan foto"></div>
             <p class="status" id="status" role="status" aria-live="polite">Pilih bingkai.</p>
             <div class="button-stack camera-actions">
-              <button class="button button-primary" id="phoneCamera" type="button" aria-expanded="false" aria-controls="cameraChoices"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 7.5h4l1.5-2h6l1.5 2h4v11h-17z"/><circle cx="12" cy="13" r="3.3"/></svg></span><span data-i18n="phoneCamera">Camera</span></button>
-              <div class="capture-choices" id="cameraChoices" hidden>
-                <button class="button button-secondary" id="takePhoto" type="button" data-i18n="photoChoice">Foto</button>
-                <button class="button button-secondary" id="takeVideo" type="button" data-i18n="videoChoice">Video</button>
-              </div>
+              <button class="button button-primary" id="phoneCamera" type="button"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3.5 7.5h4l1.5-2h6l1.5 2h4v11h-17z"/><circle cx="12" cy="13" r="3.3"/></svg></span><span data-i18n="phoneCamera">Camera</span></button>
               <button class="button button-secondary" id="choosePhoto" type="button"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9" r="1.3"/><path d="m5.5 17 5-5 3 2.8 2.2-2.3 2.8 3"/></svg></span><span data-i18n="choosePhoto">Pilih foto</span></button>
             </div>
             <input class="visually-hidden" id="cameraFile" type="file" accept="image/*" capture="user">
-            <input class="visually-hidden" id="videoFile" type="file" accept="video/*" capture="user">
             <input class="visually-hidden" id="libraryFile" type="file" accept="image/*">
             <div class="finish" id="finish" hidden>
               <div class="finish-heading"><span aria-hidden="true">✓</span><strong>Ready!</strong></div>
@@ -78,6 +72,30 @@
               <div class="album-uploads-heading"><span aria-hidden="true">☁</span><strong data-i18n="myUploads">Foto album saya</strong></div>
               <div class="album-list" id="albumList"></div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-wrap share" id="kongsi" aria-labelledby="share-title">
+        <div class="section-heading">
+          <p class="eyebrow">03 / 03</p>
+          <h2 id="share-title" data-i18n="shareHeading">Kongsi kenangan</h2>
+          <p data-i18n="shareHint">Gambar atau video sedia ada dalam telefon.</p>
+        </div>
+        <div class="share-panel">
+          <button class="button button-secondary" id="shareChoose" type="button"><span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="9" r="1.3"/><path d="m5.5 17 5-5 3 2.8 2.2-2.3 2.8 3"/></svg></span><span data-i18n="shareChoose">Pilih gambar/video</span></button>
+          <small class="share-limit" data-i18n="shareLimit">Video ≤24 MB</small>
+          <input class="visually-hidden" id="shareFile" type="file" accept="image/*,video/*">
+          <div class="share-selected" id="shareSelected" hidden>
+            <img id="shareImagePreview" alt="" hidden>
+            <video id="shareVideoPreview" controls playsinline hidden></video>
+            <small id="shareFileName"></small>
+          </div>
+          <button class="button button-primary" id="uploadShared" type="button" disabled><span class="action-icon" aria-hidden="true">☁</span><span data-i18n="sendAlbum">Hantar ke album</span></button>
+          <p class="status" id="shareStatus" role="status" aria-live="polite" hidden></p>
+          <div class="album-uploads" id="shareUploads" hidden>
+            <div class="album-uploads-heading"><span aria-hidden="true">☁</span><strong data-i18n="myUploads">Album saya</strong></div>
+            <div class="album-list" id="shareList"></div>
           </div>
         </div>
       </section>
