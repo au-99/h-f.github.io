@@ -370,7 +370,7 @@
       rsvpForm.querySelector(":invalid")?.focus();
       return;
     }
-    if (Date.now() > new Date(config.rsvpDeadline).getTime()) {
+    if (config.rsvpDeadline && Date.now() > new Date(config.rsvpDeadline).getTime()) {
       setStatus("Tempoh pengesahan RSVP telah berakhir. Sila hubungi pihak keluarga.", true);
       return;
     }
