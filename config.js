@@ -3,5 +3,5 @@ window.WEDDING_CONFIG = {
   musicUrl: "background-music.mp3",
   mapsUrl: "https://maps.app.goo.gl/cB9TgCFXSVUreUKeA?g_st=iw",
   weddingDateTime: "2026-11-14T09:00:00+08:00",
-  rsvpDeadline: "2026-10-30T23:59:59+08:00",
+  rsvpDeadline: null,
 };
