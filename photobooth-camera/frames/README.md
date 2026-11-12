@@ -1,0 +1,1 @@
+Wedding photobooth frame assets.
