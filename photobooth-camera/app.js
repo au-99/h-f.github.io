@@ -13,11 +13,13 @@
   };
   const state = { lang:'ms', frame:9, active:0, shots:[null], overlay:null, loading:false, stream:null, facing:'user', cameraRequest:0, busy:false, version:0, savedVersion:-1, prepared:null, owned:[], media:null, mediaUrl:'', mediaKind:'', mediaMime:'', mediaVersion:0, message:'', messageValues:{}, albumMessage:'', albumValues:{}, albumError:false };
   const t = (key, values={}) => (labels[state.lang][key] || key).replace(/\{(\w+)\}/g, (_,name) => String(values[name] ?? ''));
-  const slots4 = [{x:143,y:301,w:320,h:531,angle:.109},{x:642,y:312,w:327,h:531,angle:0},{x:114,y:1044,w:332,h:531,angle:0},{x:639,y:1044,w:331,h:531,angle:0}];
-  const slots1 = [{x:194,y:429,w:682,h:1095,angle:0}], slotsFull = [{x:0,y:0,w:W,h:H,angle:0}];
-  const frameSlots = id => id <= 4 ? slots4 : id <= 8 ? slots1 : slotsFull;
+  const frameIds = [1, 2, 5, 6, 9, 11, 13, 14];
+  const isNewFrame = id => [1, 2, 5, 6].includes(id);
+  const slots4 = [{x:138,y:299,w:332,h:531,angle:.0997},{x:638,y:312,w:332,h:531,angle:0},{x:114,y:1043,w:332,h:532,angle:0},{x:638,y:1043,w:332,h:532,angle:0}];
+  const slotsFull = [{x:0,y:0,w:W,h:H,angle:0}];
+  const frameSlots = id => id <= 2 ? slots4 : id === 5 || id === 6 ? [{x:194,y:431,w:id===5?674:682,h:1093,angle:0}] : slotsFull;
   const typeText = id => `${frameSlots(id).length} ${t(frameSlots(id).length === 1 ? 'photo' : 'photos')}`;
-  const framePath = id => `${FRAME_ROOT}${id}.png?v=2026-10-18`;
+  const framePath = id => isNewFrame(id) ? `frames/${id}.png?v=20261113` : `${FRAME_ROOT}${id}.png?v=2026-10-18`;
   function setMessage(key='', values={}) { state.message=key; state.messageValues=values; $('stageMessage').textContent=key ? t(key,values) : ''; }
   function setAlbumStatus(key='', error=false, values={}) { state.albumMessage=key; state.albumValues=values; state.albumError=error; $('albumStatus').hidden=!key; $('albumStatus').textContent=key ? t(key,values) : ''; $('albumStatus').classList.toggle('error',error); }
   function applyLanguage() {
@@ -31,19 +33,25 @@
     updateControls(); setMessage(state.message,state.messageValues); setAlbumStatus(state.albumMessage,state.albumError,state.albumValues); renderAlbum();
   }
   function makeFrames() {
-    for(let n=1;n<=14;n++) { const b=document.createElement('button'); b.className='frame-option'; b.type='button'; b.dataset.frame=n; b.setAttribute('aria-pressed',String(n===state.frame)); const img=document.createElement('img'); img.src=framePath(n); img.alt=''; img.loading='lazy'; const number=document.createElement('small'); number.textContent=String(n).padStart(2,'0'); b.append(img,number); b.addEventListener('click',()=>selectFrame(n)); $('frames').append(b); }
+    for(const n of frameIds) { const b=document.createElement('button'); b.className='frame-option'; b.type='button'; b.dataset.frame=n; b.setAttribute('aria-pressed',String(n===state.frame)); const img=document.createElement('img'); img.alt=''; img.loading='lazy'; if(isNewFrame(n)){loadOverlay(n).then(layer=>{const thumb=document.createElement('canvas');thumb.width=108;thumb.height=192;const c=thumb.getContext('2d');c.fillStyle='#e6f0f6';c.fillRect(0,0,108,192);c.drawImage(layer,0,0,108,192);img.src=thumb.toDataURL();}).catch(()=>{img.alt=t('frameError');});}else img.src=framePath(n); const number=document.createElement('small'); number.textContent=String(n).padStart(2,'0'); b.append(img,number); b.addEventListener('click',()=>selectFrame(n)); $('frames').append(b); }
     requestAnimationFrame(()=>$('frames').querySelector(`[data-frame="${state.frame}"]`)?.scrollIntoView({block:'nearest',inline:'center'}));
-  }
-  function inSlot(x,y,s) { const dx=x-s.x,dy=y-s.y,a=dx*s.c+dy*s.sin,b=-dx*s.sin+dy*s.c; return a>=1&&a<s.w-1&&b>=1&&b<s.h-1; }
-  function decoration(guide,id) {
-    const layer=document.createElement('canvas'); layer.width=W; layer.height=H; const c=layer.getContext('2d',{willReadFrequently:true}); c.drawImage(guide,0,0,W,H); const source=c.getImageData(0,0,W,H).data,pixels=c.createImageData(W,H),target=pixels.data,slots=frameSlots(id).map(s=>({...s,c:Math.cos(s.angle),sin:Math.sin(s.angle)}));
-    const boxes=id<=4?[[135,295,470,405],[635,755,715,855],[790,1035,975,1155]]:[[190,425,885,530],[830,530,885,700]];
-    for(const [left,top,right,bottom] of boxes) for(let y=top;y<bottom;y++) for(let x=left;x<right;x++) {const i=(y*W+x)*4,r=source[i],g=source[i+1],b=source[i+2],checker=r>=195&&g>=r-1&&b>=g-1&&g-r<=12&&b-g<=14;if(!checker&&slots.some(s=>inSlot(x,y,s))){target[i]=r;target[i+1]=g;target[i+2]=b;target[i+3]=source[i+3];}}
-    c.putImageData(pixels,0,0); return layer;
   }
   const overlayCache=new Map();
   async function loadImage(src) { const img=new Image(); img.src=src; await img.decode(); return img; }
-  async function loadOverlay(id) { if(overlayCache.has(id)) return overlayCache.get(id); const image=await loadImage(framePath(id)); const layer=id<=8 ? {background:image,foreground:decoration(await loadImage(`${FRAME_ROOT}decoration-guides/${id}.png?v=2026-10-18`),id)} : image; overlayCache.set(id,layer); return layer; }
+  async function loadOverlay(id) {
+    if(overlayCache.has(id)) return overlayCache.get(id);
+    const image=await loadImage(framePath(id));
+    if(!isNewFrame(id)){overlayCache.set(id,image);return image;}
+    const layer=document.createElement('canvas');layer.width=W;layer.height=H;
+    const c=layer.getContext('2d',{willReadFrequently:true});c.drawImage(image,0,0,W,H);
+    // Keep the glitter heart that overlaps the second photo in the collage.
+    let heart;
+    if(id<=2){heart=c.getImageData(638,775,54,69);for(let i=0;i<heart.data.length;i+=4){const r=heart.data[i],g=heart.data[i+1],b=heart.data[i+2];if(!(r>170&&r>=g-12&&b<g+22))heart.data[i+3]=0;}}
+    c.save();c.globalCompositeOperation='destination-out';
+    for(const s of frameSlots(id)){c.save();c.translate(s.x,s.y);c.rotate(s.angle);c.fillRect(0,0,s.w,s.h);c.restore();}
+    c.restore();if(heart)c.putImageData(heart,638,775);
+    overlayCache.set(id,layer);return layer;
+  }
   async function selectFrame(id) {
     if(state.busy||state.loading) return;
     if(id===state.frame && state.overlay) { $('frames').querySelector(`[data-frame="${id}"]`)?.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}); return; }
@@ -62,11 +70,10 @@
     ctx.drawImage(source,(slot.w-dw)/2,(slot.h-dh)/2,dw,dh); ctx.restore();
   }
   function draw() {
-    const decorated=state.frame<=8;
-    if(decorated&&state.overlay)ctx.drawImage(state.overlay.background,0,0,W,H); else {ctx.fillStyle='#e6f0f6';ctx.fillRect(0,0,W,H);}
+    ctx.fillStyle='#e6f0f6';ctx.fillRect(0,0,W,H);
     const slots=frameSlots(state.frame);
-    slots.forEach((slot,i)=>{ const shot=state.shots[i]; if(shot) cover(shot.image,slot,shot.mirror); else if(i===state.active&&state.stream&&video.readyState>=2) cover(video,slot,state.facing==='user'); else if(!decorated){ctx.save();ctx.fillStyle='#e8f2f7';ctx.fillRect(slot.x,slot.y,slot.w,slot.h);ctx.restore();} });
-    if(state.overlay)ctx.drawImage(decorated?state.overlay.foreground:state.overlay,0,0,W,H);
+    slots.forEach((slot,i)=>{ const shot=state.shots[i]; if(shot) cover(shot.image,slot,shot.mirror); else if(i===state.active&&state.stream&&video.readyState>=2) cover(video,slot,state.facing==='user'); });
+    if(state.overlay)ctx.drawImage(state.overlay,0,0,W,H);
   }
   let lastFrame=0;
   function animation(now) { if(!document.hidden&&now-lastFrame>=42){draw();lastFrame=now;} requestAnimationFrame(animation); }
