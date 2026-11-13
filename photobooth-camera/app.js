@@ -14,6 +14,7 @@
   const state = { lang:'ms', frame:11, active:0, shots:[null], overlay:null, loading:false, stream:null, facing:'user', cameraRequest:0, busy:false, version:0, savedVersion:-1, prepared:null, owned:[], media:null, mediaUrl:'', mediaKind:'', mediaMime:'', mediaVersion:0, message:'', messageValues:{}, albumMessage:'', albumValues:{}, albumError:false };
   const t = (key, values={}) => (labels[state.lang][key] || key).replace(/\{(\w+)\}/g, (_,name) => String(values[name] ?? ''));
   const frameIds = [2, 6, 11, 13, 14];
+  const frameNumber = id => frameIds.indexOf(Number(id)) + 1;
   const isNewFrame = id => [1, 2, 5, 6].includes(id);
   const slots4 = [{x:138,y:299,w:332,h:531,angle:.0997},{x:638,y:312,w:332,h:531,angle:0},{x:114,y:1043,w:332,h:532,angle:0},{x:638,y:1043,w:332,h:532,angle:0}];
   const slotsFull = [{x:0,y:0,w:W,h:H,angle:0}];
@@ -29,11 +30,11 @@
     $('openAlbum').setAttribute('aria-label',t('albumAria')); $('closeAlbum').setAttribute('aria-label',t('close'));
     $('capture').setAttribute('aria-label',t('cameraAria')); canvas.setAttribute('aria-label',t('viewfinder'));
     $('frameSection').setAttribute('aria-label',t('selectFrames')); $('shotTabs').setAttribute('aria-label',t('selectShots'));
-    document.querySelectorAll('.frame-option').forEach(el=>el.setAttribute('aria-label',t('frameAria',{n:el.dataset.frame,type:typeText(Number(el.dataset.frame))})));
+    document.querySelectorAll('.frame-option').forEach(el=>el.setAttribute('aria-label',t('frameAria',{n:frameNumber(el.dataset.frame),type:typeText(Number(el.dataset.frame))})));
     updateControls(); setMessage(state.message,state.messageValues); setAlbumStatus(state.albumMessage,state.albumError,state.albumValues); renderAlbum();
   }
   function makeFrames() {
-    for(const n of frameIds) { const b=document.createElement('button'); b.className='frame-option'; b.type='button'; b.dataset.frame=n; b.setAttribute('aria-pressed',String(n===state.frame)); const img=document.createElement('img'); img.alt=''; img.loading='lazy'; if(isNewFrame(n)){loadOverlay(n).then(layer=>{const thumb=document.createElement('canvas');thumb.width=108;thumb.height=192;const c=thumb.getContext('2d');c.fillStyle='#e6f0f6';c.fillRect(0,0,108,192);c.drawImage(layer,0,0,108,192);img.src=thumb.toDataURL();}).catch(()=>{img.alt=t('frameError');});}else img.src=framePath(n); const number=document.createElement('small'); number.textContent=String(n).padStart(2,'0'); b.append(img,number); b.addEventListener('click',()=>selectFrame(n)); $('frames').append(b); }
+    for(const n of frameIds) { const b=document.createElement('button'); b.className='frame-option'; b.type='button'; b.dataset.frame=n; b.setAttribute('aria-pressed',String(n===state.frame)); const img=document.createElement('img'); img.alt=''; img.loading='lazy'; if(isNewFrame(n)){loadOverlay(n).then(layer=>{const thumb=document.createElement('canvas');thumb.width=108;thumb.height=192;const c=thumb.getContext('2d');c.fillStyle='#e6f0f6';c.fillRect(0,0,108,192);c.drawImage(layer,0,0,108,192);img.src=thumb.toDataURL();}).catch(()=>{img.alt=t('frameError');});}else img.src=framePath(n); const number=document.createElement('small'); number.textContent=String(frameNumber(n)).padStart(2,'0'); b.append(img,number); b.addEventListener('click',()=>selectFrame(n)); $('frames').append(b); }
     requestAnimationFrame(()=>$('frames').querySelector(`[data-frame="${state.frame}"]`)?.scrollIntoView({block:'nearest',inline:'center'}));
   }
   const overlayCache=new Map();
@@ -88,7 +89,7 @@
     const complete=state.shots.length>0&&state.shots.every(Boolean); $('captureControls').hidden=complete; $('reviewControls').hidden=!complete; $('shotTabs').hidden=!complete||state.shots.length===1;
     $('cameraWelcome').hidden=Boolean(state.stream||state.shots.some(Boolean)); $('flipLabel').textContent=state.stream?t('flip'):'Camera'; $('flipIcon').setAttribute('href',state.stream?'#i-flip':'#i-camera');
     $('capture').disabled=state.busy||state.loading||!state.stream||!state.overlay; $('flip').disabled=state.busy; $('choosePhoto').disabled=state.busy||state.loading; $('save').disabled=state.busy||!state.prepared; $('retake').disabled=state.busy; $('openAlbum').disabled=state.busy;
-    $('frameName').textContent=`FRAME ${String(state.frame).padStart(2,'0')}`; $('frameType').textContent=typeText(state.frame); $('bottomNote').textContent=complete?(state.lang==='ms'?'Telefon + album majlis':'Phone + wedding album'):'';
+    $('frameName').textContent=`FRAME ${String(frameNumber(state.frame)).padStart(2,'0')}`; $('frameType').textContent=typeText(state.frame); $('bottomNote').textContent=complete?(state.lang==='ms'?'Telefon + album majlis':'Phone + wedding album'):'';
     const current=complete?state.shots.length:Math.min(state.active+1,state.shots.length); $('progress').textContent=`${current} / ${state.shots.length}`;
     $('shotTabs').replaceChildren(); if(complete&&state.shots.length>1)state.shots.forEach((_,i)=>{const b=document.createElement('button');b.type='button';b.textContent=t('photoNumber',{n:i+1});b.title=t('retakeNumber',{n:i+1});b.addEventListener('click',()=>retakeIndex(i));$('shotTabs').append(b);});
   }
